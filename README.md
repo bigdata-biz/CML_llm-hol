@@ -1,268 +1,291 @@
-# Large Language Models with Cloudera
+# Cloudera Machine Learning(CML)을 활용한 대규모 언어 모델
 
-The goal of this hands-on lab is to explore Cloudera Machine Learning (CML) through the lens of [Retreival Augmented Generation](https://arxiv.org/abs/2312.10997) (RAG) architecture for Large Language Models. Starting from a simple Jupyter notebook and finishing with a complete chatbot application, participants will get to know some of the key CML features and advantages. In a real-world scenario, changing business requirements and technology advancements necessitate agility and CML is a great tool to provide that to Data Science practitioners. 
+이 실습의 목표는 대규모 언어 모델을 위한 [검색 증강 생성](https://arxiv.org/abs/2312.10997) (RAG) 아키텍처의 관점에서 Cloudera Machine Learning(CML)을 탐구하는 것입니다.  
+간단한 Jupyter 노트북에서 시작하여 완전한 챗봇 애플리케이션을 구축하면서, 참가자들은 CML의 주요 기능과 장점을 익히게 됩니다.  
+실제 시나리오에서는 비즈니스 요구 사항의 변화와 기술 발전에 따라 민첩성이 필요하며, CML은 데이터 과학자들에게 이를 제공하는 훌륭한 도구입니다.  
+LLM의 적용 범위는 산업 전반에 걸쳐 매우 넓지만, 이 실습의 목적을 위해 특정 사용 사례에 집중하는 것이 유용합니다.  
 
-Because the applications of LLMs can be quite broad across industries, it is useful to hone in on a particular use case for the purposes of this lab. 
+> **실습 사용 사례:**  
+> 소프트웨어 벤더가 제품 문서를 검색할 때 직원의 생산성을 향상시키기 위해 LLM 기반의 채팅 인터페이스를 파일럿으로 도입하려고 합니다.  
 
-> **Lab use case:** Software vendor is looking to pilot an LLM-based chat interface to improve employee productivity when searching product documentation. 
- 
-## Lab Flow
 
-Ultimately the lab aims to demonstrate the ease and flexibility in which users can prototype new approaches and integrate them into fully-packages solutions like LLM applications.
+## 실습 흐름
 
-There are currently 8 exercises in the lab, and others will be added soon. It is important to follow the exercise order, as there are dependencies between different stages. 
-  - [0. Getting into CML](#getting-into-cml)
-  - [1. Exploring Amazon Bedrock through CML](#1-exploring-amazon-bedrock-through-cml)
-  - [2. Scrape and ingest data and populate Pinecone DB](#2-scrape-and-ingest-data-and-populate-pinecone-db)
-  - [3. Explore your data via Pinecone DB](#3-explore-your-data-via-pinecone-db)
-  - [4. Deploy a CML application](#4-deploy-a-cml-application)
-  - [5. Switch Vector DB to Chroma DB](#5-switch-vector-db-to-chroma-db)
-  - [6. Langchain](#6-langchain)
-  - [7. Use a locally hosted Mistral model](#7-use-a-locally-hosted-llama2-model)
-  - [8. Launch Final Application](#8-launch-final-application)
+궁극적으로 이 실습은 사용자가 새로운 접근 방식을 프로토타입하고 이를 LLM 애플리케이션과 같은 완전한 솔루션에 통합하는 과정의 용이성과 유연성을 보여주는 것을 목표로 합니다.  
+현재 실습에는 8개의 연습이 있으며, 추후 다른 연습이 추가될 예정입니다.  
+단계 간에 의존성이 있으므로 연습 순서를 따르는 것이 중요합니다.  
 
-## 0. Getting into CML
+- [0. CML에 들어가기](#0-cml-시작하기)
+- [1. CML을 통한 Amazon Bedrock 탐색](#1-cml을-통한-amazon-bedrock-탐색)
+- [2. 데이터 스크래핑 및 Pinecone DB 데이터 삽입](#2-데이터-스크래핑-및-pinecone-db-데이터-삽입)
+- [3. Pinecone DB를 통한 데이터 탐색](#3-pinecone-db를-통한-데이터-탐색)
+- [4. CML 애플리케이션 배포](#4-cml-애플리케이션-배포)
+- [5. Vector DB를 Chroma DB로 전환하기](#5-vector-db를-chroma-db로-전환하기)
+- [6. Langchain](#6-langchain)
+- [7. 로컬에 호스팅된 Mistral 모델 사용하기](#7-로컬에-호스팅된-mistral-모델-사용하기)
+- [8. 최종 애플리케이션 실행](#8-최종-애플리케이션-실행)
 
-Your SSO login link will take you direction to the home screen of Cloudera Data Platform. From here you can access CML - one of its Data Services.
+## 0. CML 시작하기
 
-> **0a.** Click on the "Machine Learning" icon.
+SSO 로그인 링크를 사용하면 Cloudera Data Platform의 홈 화면으로 바로 이동하게 됩니다. 여기에서 CML(Data Services 중 하나)에 액세스할 수 있습니다.
 
-> **0b.** Then click on ML Workspace called _llmhol-aw-wksp_ (the name may vary for your lab).
+> **0a.** "Machine Learning" 아이콘을 클릭하세요.
+
+> **0b.** 그런 다음 _llmhol-aw-wksp_라는 이름의 ML Workspace를 클릭합니다(랩의 설정에 따라 이름이 다를 수 있습니다).  
 ![Control Plane to CML](./assets/intro_1.png)
 
-> If you have switched to the new Cloudera UI, your screen will look like below. 
+> 새로운 Cloudera UI로 전환한 경우, 화면은 아래와 같이 표시됩니다.  
 ![Control Plane with new Cloudera UI](./assets/Cloudera_new_ui.png)
 
-If you are new to CML, take a moment to explore available information through the dashboard.  
+CML이 처음이라면, 대시보드를 통해 사용할 수 있는 정보를 잠시 탐색해 보세요.  
 
-Concept of _projects_ is used to organize the workspace. Each project is typically linked to a remote repository (e.g. git) and can have multiple collaborators working on it. In the interest of time, a _Hands on Lab Workshop with LLM_ project has already been created for you and you are the sole _Owner_ of that project. 
+워크스페이스를 구성하는 데는 _프로젝트_라는 개념이 사용됩니다. 각 프로젝트는 일반적으로 원격 저장소(e.g., Git)와 연결되어 있으며 여러 협력자가 함께 작업할 수 있습니다. 시간을 절약하기 위해 _Hands on Lab Workshop with LLM_ 프로젝트가 미리 생성되어 있으며, 해당 프로젝트의 유일한 _소유자(Owner)_는 사용자입니다.  
 
-> **0c.** When ready click into the project:
+> **0c.** 준비가 되면 프로젝트를 클릭하세요:  
 ![Alt-text](./assets/cml_intro-1.png)
 
-Take a moment to familiarize yourself with the project page. Notice that your project now has all required files (your code base), a readme below, project specific options in the left hand column, plus more. Throughout the lab you will use many of the features listed here.
+프로젝트 페이지를 익히는 데 잠시 시간을 가져보세요. 프로젝트에는 이제 필요한 모든 파일(코드베이스)이 있으며, 아래에 README 파일, 왼쪽 열에 프로젝트별 옵션 등이 포함되어 있습니다. 이 실습 과정에서 여기 나열된 많은 기능을 사용하게 됩니다.
 
-## 1. Exploring Amazon Bedrock through CML
 
-In this first section, we'll interact with a model (Anthropic's Claude) via Amazon's Bedrock service. To do this we will start a _Session_ with a Jupyter notebook UI. 
+## 1. CML을 통한 Amazon Bedrock 탐색
 
->**1a.** Start a session by clicking _New Session_ in the top right corner. Alternatively you can click on _Sessions_ in the sidebar and click _New Session_ there.
+이 첫 번째 섹션에서는 Amazon의 Bedrock 서비스를 통해 모델(Anthropic의 Claude)과 상호작용합니다. 이를 위해 Jupyter Notebook UI를 사용하여 _세션(Session)_을 시작합니다.  
+
+> **1a.** 오른쪽 상단에서 _New Session_을 클릭하여 세션을 시작하세요. 또는 사이드바에서 _Sessions_를 클릭한 다음 _New Session_을 클릭해도 됩니다.  
 ![Alt text](./assets/open-session.png)
 
->**1b.** Give you session a name (e.g. "Jupyter Rocks!"). 
->* For **Editor** select _JupyterLab_ 
->* For **Kernel** select _Python 3.10_
->* For **Edition** select _Nvidia GPU_ 
->* Leave the other settings as is.
->![Session setup UI](./assets/Session-settings.png)
+> **1b.** 세션 이름을 입력하세요(예: "Jupyter Rocks!").  
+> * **Editor**는 _JupyterLab_을 선택합니다.  
+> * **Kernel**은 _Python 3.10_을 선택합니다.  
+> * **Edition**은 _Nvidia GPU_를 선택합니다.  
+> * 다른 설정은 변경하지 않습니다.  
+> ![Session setup UI](./assets/Session-settings.png)
 
->**1c.** Click _Start Session_ in the bottom right.
+> **1c.** 오른쪽 하단에서 _Start Session_을 클릭하세요.
 
->**1d.** After a few seconds your isolated compute pod, running Jupyter UI, with Python 3.10 Kernel and additional GPU libraries will be ready. 
+> **1d.** 몇 초 후, Python 3.10 커널과 추가 GPU 라이브러리를 실행하는 Jupyter UI가 포함된 격리된 컴퓨팅 팟이 준비됩니다.  
 
->**1e.** A pop-up will open suggesting data connection code snippets to get started. You can select _Don't show me this again_ and close the pop-up window.
+> **1e.** 시작 코드 스니펫을 제안하는 팝업이 열립니다. _Don't show me this again_을 선택하고 팝업 창을 닫으세요.  
 
-> **1f.** You will now see a familiar Jupyter notebook interface. In the left navigation panel go to ```1_hosted_models``` folder and open ```prototype_with_aws_bedrock.ipynb``` by double-clicking it.
+> **1f.** 이제 익숙한 Jupyter Notebook 인터페이스가 나타납니다. 왼쪽 탐색 패널에서 ```1_hosted_models``` 폴더로 이동한 후, ```prototype_with_aws_bedrock.ipynb``` 파일을 더블 클릭하여 여세요.  
 ![Alt text](./assets/bedrock-file.png)
 
->**1g.** As you walk through the notebook review the explanations and run each cell (you can use ```Enter+Shift``` or ```Command+Enter```). When you are finished going through the notebook come back to this guide. 
+> **1g.** 노트북의 설명을 읽으며 각 셀을 실행하세요(```Shift+Enter``` 또는 ```Command+Enter```를 사용할 수 있습니다). 노트북을 완료한 후 이 가이드로 돌아오세요.  
 ![Alt text](./assets/bedrock-client-setup.png)
 
-:pencil2: You have now gotten familiar with creating a CML session, working with JupyterLab editor and interacted with a 3rd party LLM provider. All within an isolated and secure compute pod.
+:pencil2: 이제 CML 세션 생성, JupyterLab 편집기 사용, 그리고 3rd party LLM 제공자와 상호작용하는 과정을 익혔습니다. 모든 작업은 격리되고 안전한 컴퓨팅 팟에서 이루어졌습니다.
 
-## 2. Scrape and ingest data and populate Pinecone DB
+## 2. 데이터 스크래핑 및 Pinecone DB 데이터 삽입
 
-In this section you will define a CML _Job_ to load text data into [Pinecone](https://www.pinecone.io/) vector database. Jobs are responsible for running scripts in a specific and isolated environment (just like sessions from exercise 1).  Jobs can run on a schedule, on-demand, or be joined together into pipelines. 
+이 섹션에서는 [Pinecone](https://www.pinecone.io/) 벡터 데이터베이스에 텍스트 데이터를 로드하기 위해 CML _Job_을 정의합니다. Job은 특정하고 격리된 환경에서 스크립트를 실행하는 역할을 하며(연습 1에서의 세션과 유사), 스케줄에 따라 실행되거나, 필요에 따라 실행되거나, 파이프라인에 연결될 수 있습니다.
 
-For this exercise html links are already provided in  ```2_populate_vector_db/html_links.txt```. These sample links point to various pages of [Cloudera's CML documentation](https://docs.cloudera.com/machine-learning/cloud/). In this lab you have an option to point to other URL location(s) by updating this file. However, any time you update the links you will also need to rerun the job. 
+이 연습에서는 ```2_populate_vector_db/html_links.txt```에 HTML 링크가 이미 제공되어 있습니다. 이 샘플 링크는 [Cloudera의 CML 문서](https://docs.cloudera.com/machine-learning/cloud/)의 다양한 페이지를 가리킵니다. 실습에서 이 파일을 업데이트하여 다른 URL로 변경할 수 있지만, 링크를 업데이트할 때마다 Job을 다시 실행해야 합니다.
 
-There are two ways to create a _Job_ in CML: via the UI or programmatically with [CML's APIv2](https://docs.cloudera.com/machine-learning/cloud/api/topics/ml-api-v2.html). In production you would likely opt for the second option. For this exercise, it's useful to create a job through the UI so we can understand the process a bit better. 
+CML에서 _Job_을 생성하는 방법은 두 가지입니다: UI를 통해 생성하거나 [CML의 APIv2](https://docs.cloudera.com/machine-learning/cloud/api/topics/ml-api-v2.html)를 사용하여 프로그래밍 방식으로 생성하는 것입니다. 실제 환경에서는 두 번째 옵션을 사용하는 경우가 많지만, 이 연습에서는 UI를 통해 Job을 생성하여 과정을 더 잘 이해하는 데 집중합니다.
 
->**2a.** Note that your project already has one job, namely _Pull and Convert HTMLS to TXT_. This job will be a dependency of a new job you create. You do not need to run it just yet.
+> **2a.** 프로젝트에 이미 _Pull and Convert HTMLS to TXT_라는 Job이 생성되어 있습니다. 이 Job은 새로 생성할 Job의 의존성(dependency)이 됩니다. 아직 실행하지는 마세요.  
 ![Alt text](./assets/html-scrape-1.png)
 
->**2b.** In the left sidebar, click on _Jobs_.
+> **2b.** 왼쪽 사이드바에서 _Jobs_를 클릭하세요.  
 ![Alt text](./assets/html-scrape-jobs.png)
 
->**2c.** Press _New Job_ in the top right corner.
+> **2c.** 오른쪽 상단의 _New Job_ 버튼을 클릭하세요.  
 ![Alt text](./assets/html-scrape-new-job.png)
 
->**2d.** On the next screen, give your job a name.
+> **2d.** 다음 화면에서 Job 이름을 입력하세요.
 
->**2e.** Under **Script** browse to ```2_populate_vector_db/pinecone_vectordb_insert.py``` by clicking on the folder icon.
+> **2e.** **Script** 아래에서 폴더 아이콘을 클릭하여 ```2_populate_vector_db/pinecone_vectordb_insert.py```를 선택하세요.
 
-> **2f.** Ensure you've selected the right runtime settings, per below:
->  For **Editor** select _JupyterLab_ 
-> For **Kernel** select _Python 3.10_
-> For **Edition** select _Nvidia GPU_ 
+> **2f.** 아래 설정에 따라 올바른 런타임 설정을 선택했는지 확인하세요:  
+> - **Editor**: _JupyterLab_  
+> - **Kernel**: _Python 3.10_  
+> - **Edition**: _Nvidia GPU_  
 
->**2g.** Under **Schedule**, select _Dependent_, then select the job _Pull and Convert HTMLS to TXT_. ![Alt text](./assets/html-scrape-job-parameters.png)
+> **2g.** **Schedule**에서 _Dependent_를 선택한 다음, Job으로 _Pull and Convert HTMLS to TXT_를 선택하세요.  
+![Alt text](./assets/html-scrape-job-parameters.png)
 
-> **2h.** Finally click _Create Job_, scrolling all the way down.
+> **2h.** 화면 맨 아래로 스크롤하여 _Create Job_을 클릭하세요.
 
-Great! Now you've created your very own CML job! You can run the scraping job and the populate vector DB job will kick off automatically after that. 
+좋습니다! 이제 직접 CML Job을 생성했습니다! 스크래핑 Job을 실행하면 벡터 DB를 채우는 Job이 자동으로 시작됩니다.
 
->**2g.** Go back to _Jobs_ (as shown above in substep 2b)
+> **2i.** _Jobs_로 다시 이동하세요(위 **2b** 단계 참조).
 
->**2h.** Click the _Run as_ button for the _Pull and Convert HTMLS to TXT_ job. Note that jobs can also be triggered using a [machine user](https://docs.cloudera.com/management-console/cloud/user-management/topics/mc-machine-user.html) (a.k.a. service account).   
+> **2j.** _Pull and Convert HTMLS to TXT_ Job 옆의 _Run as_ 버튼을 클릭하세요. Job은 [machine user](https://docs.cloudera.com/management-console/cloud/user-management/topics/mc-machine-user.html)(서비스 계정)로도 트리거할 수 있습니다.  
 ![Alt text](./assets/html-scrape-run-job.png)
 
-After just over a minute you should see both of your jobs completed successfully. While the jobs are running you can review the code in ```2_populate_vector_db/pinecone_vectordb_insert.py```, by navigating to _Overview_ > _Files_ in a new tab.
+약 1분 후 두 개의 Job이 모두 성공적으로 완료되었음을 확인할 수 있습니다. Job이 실행되는 동안 ```2_populate_vector_db/pinecone_vectordb_insert.py``` 파일의 코드를 검토하려면 새 탭에서 _Overview_ > _Files_로 이동하세요.  
 ![Alt text](./assets/html-scrape-post-run-job.png)
 
-:pencil2: CML jobs give users an ability to automate recurrent tasks and streamline the workflow for a machine learning project. You have seen CML interact with a popular 3rd party vector database within an isolated compute framework. 
+:pencil2: CML Job은 반복 작업을 자동화하고 머신러닝 프로젝트의 워크플로를 간소화할 수 있는 기능을 제공합니다. 격리된 컴퓨팅 프레임워크 내에서 인기 있는 3rd party 벡터 데이터베이스와 상호작용하는 방법을 학습했습니다.
 
-## 3. Explore your data via Pinecone DB
+## 3. Pinecone DB를 통한 데이터 탐색
 
-In this exercise you will interact with the knowledge base that has been loaded in a Pinecone vector database in [Exercise 2](#2-scrape-and-ingest-data-and-populate-pinecone-db). 
+이 연습에서는 [Exercise 2](#2-scrape-and-ingest-data-and-populate-pinecone-db)에서 Pinecone 벡터 데이터베이스에 로드된 지식 베이스와 상호작용합니다.
 
->**3a.** Click on _Sessions_ in the left sidebar. If the session you've created before has expired, click _New Session_ in the top right and follow the steps in **1b**. Otherwise, click on your session to return to it. 
+> **3a.** 왼쪽 사이드바에서 _Sessions_를 클릭하세요. 이전에 생성한 세션이 만료된 경우, 오른쪽 상단에서 _New Session_을 클릭하고 **1b** 단계의 지침을 따르세요. 만료되지 않았다면 세션을 클릭하여 다시 접속하세요.
 
->**3b.**  Once Jupyter UI comes up, open file ```3_query_vector_db/pinecone_vectordb_query.ipynb``` by double clicking it.
+> **3b.** Jupyter UI가 열리면, ```3_query_vector_db/pinecone_vectordb_query.ipynb``` 파일을 더블 클릭하여 여세요.  
 ![Interact with Pinecone](./assets/pinecone-notebook.png)
 
->**3c.** Try the Cloudera ML Copilot! Click on the chat icon in the left side bar of the Jupyter UI. This will open a chat window. Start with a generic question like
-```What does sentence_transformers package do in python?```
+> **3c.** Cloudera ML Copilot을 시도해 보세요! Jupyter UI의 왼쪽 사이드바에서 채팅 아이콘을 클릭하세요. 채팅 창이 열리면 다음과 같은 일반적인 질문으로 시작하세요.  
+```What does sentence_transformers package do in python?```  
 ![Copilot chat UI](./assets/copilot_1.png)
 
->**3d.** Next you can provide parts of the notebook to the ML Copilot as contxt. To do this, highlight some code (e.g. all of ```get_nearest_chunk_from_pinecone_vectordb``` function) and check the _Include Selection_ box below the chat panel. Then ask ```What does this code do?```.
+> **3d.** 그다음 ML Copilot에 노트북의 일부를 컨텍스트로 제공할 수 있습니다. 이를 위해, 코드를 강조 표시하세요(예: ```get_nearest_chunk_from_pinecone_vectordb``` 함수 전체). 그런 다음 채팅 패널 아래의 _Include Selection_ 상자를 체크하세요. 이후 ```What does this code do?```라고 질문하세요.  
 ![Copilot with context](./assets/copilot_2.png)
 
->**3e.** Finally, work through the notebook by running each cell. When you are finished come back to this guide.
+> **3e.** 마지막으로 노트북의 각 셀을 실행하며 작업을 진행하세요. 완료한 후 이 가이드로 돌아오세요.
 
-:pencil2: You've gotten some first-hand experience with Cloudera ML Copilot capabilities. Remember that the underlying model can be self-hosted, without any external calls. You have also not only populated, but also retreived context chunks from a Pinecone Vector DB using CML. You have all of the starting building blocks for building a full RAG-based, LLM application.
+:pencil2: Cloudera ML Copilot 기능을 직접 경험해 보았습니다. 이 기본 모델은 외부 호출 없이 자체 호스팅될 수 있습니다. 또한 CML을 사용하여 Pinecone 벡터 DB에서 컨텍스트 청크를 로드하고 검색하는 작업을 수행했습니다. 이제 RAG 기반 LLM 애플리케이션을 구축하기 위한 모든 기본 빌딩 블록을 갖추게 되었습니다.
 
-## 4. Deploy a CML application
+## 4. CML 애플리케이션 배포
 
-So far we have interacted with our models and vector database through a Jupyter notebook. Now lets see how a user might interact with an LLM solution through a CML application. CML can be used to deploy UI applications based on popular frameworks (e.g. [flask](https://flask.palletsprojects.com/en/3.0.x/), [streamlit](https://streamlit.io/), [gradio](https://www.gradio.app/)) for deploying applications. In this lab we'll be deploying a gradio app to interact with the model using a chat interface. 
+지금까지 Jupyter 노트북을 통해 모델과 벡터 데이터베이스를 다뤘습니다. 이제 CML 애플리케이션을 통해 사용자가 LLM 솔루션과 상호작용하는 방법을 알아보겠습니다.  
+CML은 [flask](https://flask.palletsprojects.com/en/3.0.x/), [streamlit](https://streamlit.io/), [gradio](https://www.gradio.app/)와 같은 인기 프레임워크를 기반으로 UI 애플리케이션을 배포하는 데 사용됩니다.  
+이 실습에서는 gradio 앱을 배포하여 채팅 인터페이스를 통해 모델과 상호작용할 것입니다.
 
-The exercise will walk you through the steps to deploy the application using the UI. We'll also explore how to do this programatically through the CML APIv2. 
+이 연습은 UI를 사용하여 애플리케이션을 배포하는 단계를 안내합니다. 또한 CML APIv2를 통해 프로그래밍 방식으로 이를 수행하는 방법도 탐색합니다.
 
->**4a.** Go back to your project screen, by clicking ![<-- Project](./assets/project-btn.png) in the top bar of your session. 
+> **4a.** 세션 상단의 ![<-- Project](./assets/project-btn.png) 버튼을 클릭하여 프로젝트 화면으로 돌아가세요.
 
->**4b.** In the left sidebar click on _Applications_. 
+> **4b.** 왼쪽 사이드바에서 _Applications_를 클릭하세요.  
 ![Alt-text](./assets/deploy-cml-app-button.png)
 
->**4c.** Press _New Application_ in the middle of the screen.
+> **4c.** 화면 중앙의 _New Application_ 버튼을 클릭하세요.
 
->**4d.** Name your application. Here we name it ```LLM APP```
+> **4d.** 애플리케이션 이름을 입력하세요. 여기서는 ```LLM APP```으로 설정합니다.
 
->**4e.** Provide a creative subdomain name. This has to be unique.
+> **4e.** 고유한 서브도메인 이름을 입력하세요. 이는 반드시 고유해야 합니다.
 
->**4f.** Select the following path for your application **Script**:
+> **4f.** 애플리케이션 **Script**의 경로로 다음을 선택하세요:  
 ```4_launch_hosted_app/llm_prototype_app.py```
 
->**4e.** Ensure you have selected the right container settings for the application, per below:
->* **Editor:** _Jupyter Notebook_
->* **Kernal:** _Python 3.10_
->* **Edition:** _Nvidia GPU_
+> **4g.** 아래 설정에 따라 애플리케이션의 올바른 컨테이너 설정을 선택했는지 확인하세요:  
+> * **Editor:** _Jupyter Notebook_  
+> * **Kernel:** _Python 3.10_  
+> * **Edition:** _Nvidia GPU_
 
->**4e.** For resource profile, select _2 vCPU / 4 GB Memory_. Overall, aside from the subdomain, settings should look like the below screenshot.
+> **4h.** 리소스 프로필로 _2 vCPU / 4 GB Memory_를 선택하세요. 서브도메인을 제외한 설정은 아래 스크린샷과 같아야 합니다.  
 ![Alt text](./assets/image_app.png)
 
->**4f.** Click _Create Application_ at the bottom of the page.
+> **4i.** 페이지 하단의 _Create Application_을 클릭하세요.
 
-### Interacting with an Application
-The application will take a couple of miuntes to start, once it does you can click on its card to open the UI. While it's starting you can review the code in ```4_launch_hosted_app/llm_prototype_app.py```.
+### 애플리케이션과 상호작용하기
+애플리케이션이 시작되기까지 몇 분이 걸릴 수 있습니다. 시작 후 카드에서 애플리케이션을 클릭하면 UI를 열 수 있습니다. 시작되는 동안 ```4_launch_hosted_app/llm_prototype_app.py```의 코드를 검토해 보세요.
 
-You will notice reliance on some environment variables. These have been setup at the ML Workspace level and can be shared accross all projects. Alternatively, environment variables can be specific to a Project or even a session, job, or application. 
+스크립트가 일부 환경 변수를 사용하는 것을 확인할 수 있습니다. 이러한 변수는 ML Workspace 수준에서 설정되어 모든 프로젝트에서 공유될 수 있습니다. 또는 환경 변수는 특정 프로젝트, 세션, Job, 또는 애플리케이션에 국한될 수도 있습니다.
 
-You might also notice this script shares some functions with the code we used earlier to query our pinecone database. The new response function also considers which model the user selects to complete the response. This highlights the power of modularity in CML.
+또한 이 스크립트가 이전에 벡터 데이터베이스를 쿼리하는 데 사용한 코드와 몇 가지 기능을 공유하는 것을 알 수 있습니다. 새로운 응답 함수는 사용자가 선택한 모델에 따라 응답을 완성하는 것도 고려합니다. 이는 CML의 모듈화 기능의 강력함을 보여줍니다.
 
->**4h.** Check to confirm your app has deployed successfuly. You should see a message confirming. 
+> **4j.** 애플리케이션이 성공적으로 배포되었는지 확인하세요. 메시지를 통해 확인할 수 있습니다.  
 ![Alt-text](./assets/image-click-on-app.png)
 
->**4i.** Click on the App's URL to navigate to the gradio UI. In a new tab you should see the appliction open:
+> **4k.** 애플리케이션의 URL을 클릭하여 gradio UI로 이동하세요. 새 탭에서 애플리케이션이 열리는 것을 확인할 수 있습니다.  
 ![alt text](.assets/../assets/image_app3.png)
 
-Take some time to ask different questions about CML. Some examples to get you started... 
-- What is ML Runtime?
-- What version of datalake is compatible with CML 2.0.45?
-- What is the latest CML release?
+CML에 대해 다양한 질문을 해보세요. 시작하는 데 도움이 되는 몇 가지 예는 다음과 같습니다:  
+- What is ML Runtime?  
+- What version of datalake is compatible with CML 2.0.45?  
+- What is the latest CML release?  
 
-_Bonus question_ Why is it that with that last prompt about CML release, the model didn't return an expected result? What are some ways you could overcome this challenge?
+_Bonus question_ 마지막 질문(CML 릴리스에 대한 질문)에서 모델이 예상한 결과를 반환하지 않은 이유는 무엇일까요? 이를 해결할 수 있는 방법에는 어떤 것들이 있을까요?
 
-Also, note the parameters towards the bottom that you can configure to change the way your application responds. You can choose to use Pinecone or not (i.e. no retreival-augmentation), regulate length of response, and adjust the _Temperature_ (i.e. creativity/randomness) of the response. Note that responses using Vector Database will take longer to return as the LLM needs to process many more tokens as input context.
+또한 애플리케이션 응답 방식을 변경하기 위해 하단의 매개변수를 조정할 수 있습니다. Pinecone 사용 여부(즉, 검색 증강 비활성화), 응답 길이 조정, _Temperature_ (창의성/무작위성) 조정이 가능합니다. 벡터 데이터베이스를 사용하는 응답은 더 많은 토큰을 입력 컨텍스트로 처리해야 하므로 시간이 더 걸릴 수 있습니다.
 
-:pencil2: One of the key capabilities of CML is the hosting Applications integrated as part of the Data Science workflow. Practitioners can iterate rapidly and securely share insights, features, and prototypes to interested stakeholders. 
+:pencil2: CML의 주요 기능 중 하나는 데이터 과학 워크플로의 일부로 통합된 애플리케이션을 호스팅하는 것입니다. 실무자는 신속하게 반복하며 이해관계자에게 통찰력, 기능, 프로토타입을 안전하게 공유할 수 있습니다.
 
-## 5. Switch Vector DB to Chroma DB
+## 5. Vector DB를 Chroma DB로 전환하기
 
-We'll continue to explore CML's modularity for hosting LLM applications. We will now switch over to a Chroma DB. This may be a good choice customers who are not able to use external vector databases, and need everything to be hosted in-house. Fundamentally, a good LLM application offers design flexibility, by allowing users to switch out the models or vector db components per business requirements.
+CML의 모듈성을 활용하여 LLM 애플리케이션을 호스팅하는 방법을 계속 탐구합니다. 이번에는 Chroma DB로 전환해 보겠습니다.  
+Chroma DB는 외부 벡터 데이터베이스를 사용할 수 없는 고객에게 적합하며, 모든 데이터를 자체적으로 호스팅해야 하는 경우 유용합니다.  
+근본적으로 우수한 LLM 애플리케이션은 모델 또는 벡터 DB 구성 요소를 비즈니스 요구에 따라 교체할 수 있는 설계 유연성을 제공합니다.
 
-You will recall that in [exercise 2](#2-scrape-and-ingest-data-and-populate-pinecone-db) we created a new job using the UI. Now we will create a new job using CML's API. Using the API facilitates a programmatic approach to job creation and execution, offering significant advantages in terms of MLOps and general CI/CD. 
+[Exercise 2](#2-scrape-and-ingest-data-and-populate-pinecone-db)에서 UI를 사용하여 Job을 생성한 것을 기억하실 겁니다. 이번에는 CML의 API를 사용하여 새로운 Job을 생성합니다.  
+API를 사용하면 Job 생성 및 실행을 프로그래밍 방식으로 처리할 수 있어, MLOps 및 일반적인 CI/CD에서 중요한 이점을 제공합니다.
 
->**5a.** Go to the session (started in step 1c). If this session has timed out, start a new session, with the same parameters as step 1c. Once in your session open the following path illustrated below:
+> **5a.** 이전에 시작한 세션(1c 단계에서 시작)을 엽니다. 이 세션이 만료된 경우, 1c 단계와 동일한 매개변수로 새 세션을 시작하세요. 세션이 열리면 아래 경로로 이동합니다:
 
->**5b.** Navigate to ```5_populate_local_chroma_db``` and open notebook ```create_chroma_job.ipynb```
+> **5b.** ```5_populate_local_chroma_db``` 경로로 이동한 뒤, ```create_chroma_job.ipynb``` 노트북을 엽니다.  
 ![Populate chroma db using CML API notebook](./assets/populate-chroma.png)
 
->**5c.** Work through all the cells in this notebook by running them, then return to this guide for next steps.
+> **5c.** 노트북의 모든 셀을 실행하여 작업을 진행한 뒤, 이 가이드로 돌아오세요.
 
->**5d.** To confirm the job completed successfully, exit your suession by pressing ![<-- Project](./assets/project-btn.png). Then go to _Jobs_ in the left sidebar and you should see _Success_ next to the _Populate Chroma Vector DB job_.
+> **5d.** Job이 성공적으로 완료되었는지 확인하려면, ![<-- Project](./assets/project-btn.png) 버튼을 눌러 세션에서 나옵니다. 그런 다음 왼쪽 사이드바의 _Jobs_로 이동하면 _Populate Chroma Vector DB job_ 옆에 _Success_ 상태가 표시됩니다.
 
-:pencil2: To support automation CML provides a robust API that supports most of the operations that can be done through the UI. This enables practitioners to plug in to existing CI/CD pipelines that exist in the enterprise.
+:pencil2: CML은 UI를 통해 수행할 수 있는 대부분의 작업을 지원하는 강력한 API를 제공합니다. 이를 통해 실무자는 엔터프라이즈에서 사용 중인 기존 CI/CD 파이프라인에 쉽게 통합할 수 있습니다.
+
 
 ## 6. Langchain
 
-So far we have seen a number of components that come together to allow us to interact with an LLM, the vector database, the application, the code base, and finally the underlying platform. Langchain is a powerful library that offers a flexible way to chain those (plus more) components together. In this lab we'll look at a particular use of Langchain. For more information see : [Intro to Langchain](https://python.langchain.com/docs/get_started/introduction).
+지금까지 우리는 LLM, 벡터 데이터베이스, 애플리케이션, 코드베이스, 그리고 기본 플랫폼과 상호작용할 수 있도록 구성된 여러 구성 요소를 살펴보았습니다.  
+Langchain은 이러한 구성 요소(및 추가 구성 요소)를 유연하게 연결할 수 있는 강력한 라이브러리입니다.  
+이번 실습에서는 Langchain의 특정 사용 사례를 살펴봅니다. 더 많은 정보를 보려면 [Intro to Langchain](https://python.langchain.com/docs/get_started/introduction)을 참조하세요.
 
-In this section we'll be looking at using langchain to "chain" together the following components:
-- Amazon Bedrock model
-- Chroma Vector Database hosted locally
-- Prompt Template
+이 섹션에서는 Langchain을 사용하여 다음 구성 요소를 "체인"으로 연결합니다:
+- Amazon Bedrock 모델
+- 로컬에 호스팅된 Chroma 벡터 데이터베이스
+- 프롬프트 템플릿
 
-The beauty of using langchain for our example is once we've created the chain object we do not have to rely on custom functions to query the vector store, then send path to LLM for a reponse. This is all done in a single function. The pieces of the "chain" can then be replaced when needed.
+Langchain을 사용하는 장점은, 체인 객체를 한 번 생성하면 벡터 저장소를 쿼리한 다음, LLM으로 경로를 보내 응답을 받는 작업을 사용자 정의 함수에 의존하지 않고 단일 함수에서 처리할 수 있다는 점입니다.  
+체인의 구성 요소는 필요에 따라 쉽게 교체할 수 있습니다.
 
->**6a.** Go to your session. Create a new one if yours timed out. 
+> **6a.** 세션으로 이동하세요. 세션이 만료된 경우 새 세션을 생성하세요.
 
->**6b.** Navigate to ```6_langchain_introduction``` and open notebook titled ```Langchain_Bedrock_Chroma.ipynb```
+> **6b.** ```6_langchain_introduction``` 경로로 이동한 뒤, ```Langchain_Bedrock_Chroma.ipynb```라는 제목의 노트북을 엽니다.  
 ![Exercise 6 notebook](./assets/langchain-notebook.png)
 
->**6c.** Work through the cells in the notebook by running them. When you are done exist your jupyter session and come back to this guide.
+> **6c.** 노트북의 셀을 실행하며 작업을 진행하세요. 완료한 후 Jupyter 세션을 종료하고 이 가이드로 돌아오세요.
 
-:pencil2: In this exercise you've gotten familiar with a popular chaining package and applied it in a CML session to build a chain for interacting with Bedrock, Chroma, and a specific prompt template. 
+:pencil2: 이번 실습에서는 인기 있는 체이닝 패키지를 익히고, Bedrock, Chroma, 특정 프롬프트 템플릿과 상호작용하기 위한 체인을 구축하는 CML 세션에 이를 적용했습니다.
 
-## 7. Use a locally hosted Mistral model
+## 7. 로컬에 호스팅된 Mistral 모델 사용하기
 
-Many organizations are hesitant to use 3rd party LLM providers, instead opting to host open source models internally, to leverage in their use cases. CML provides a convenient facility to do this via _Model Deployments_ functionality. This provides a scalable and secure way to host LLMs and classic inference models in an isolated and fully controlled CML environment. 
+많은 조직은 3rd-party LLM 제공자를 사용하는 것을 꺼리며, 대신 오픈 소스 모델을 내부적으로 호스팅하여 자신들의 사용 사례에 활용하는 방식을 선호합니다.  
+CML은 _Model Deployments_ 기능을 통해 이를 편리하게 지원합니다. 이 기능은 LLM 및 기존 추론 모델을 격리되고 완전히 제어되는 CML 환경에서 확장 가능하고 안전하게 호스팅할 수 있는 방법을 제공합니다.
 
-For the purposes of this exercise, a [Mistral-7B-instruct-v0.1](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1) model has already been deployed in a separate, public project in the ML Workspace. You will use this model's endpoint to interact with it similar to how interactions with AWS Bedrock was done.
+이 실습에서는 [Mistral-7B-instruct-v0.1](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1) 모델이 ML Workspace 내 별도의 공개 프로젝트에 이미 배포되어 있습니다.  
+AWS Bedrock와 상호작용했던 방식과 유사하게 이 모델의 엔드포인트를 사용하여 상호작용할 것입니다.
 
->**7a.** Go to your session, or start a new one if yours timed out.
+> **7a.** 세션으로 이동하거나, 세션이 만료된 경우 새 세션을 시작하세요.
 
->**7b.** Navigate to ```7_cml_hosted_model``` and open notebook titled ```query_cml_llm_model_api.ipynb```:
+> **7b.** ```7_cml_hosted_model``` 경로로 이동한 뒤, ```query_cml_llm_model_api.ipynb```라는 제목의 노트북을 엽니다.  
 ![CML model notebook](./assets/hosted-model-notebook.png)
 
->**7c.** Work through the cells in this notebook by running them. When you are done, exist your Jupyter session and return to this guide. 
+> **7c.** 노트북의 셀을 실행하며 작업을 진행하세요. 완료한 후 Jupyter 세션을 종료하고 이 가이드로 돌아오세요.
 
-:pencil2: CML can host models and expose them via standard API mechanism, with authorization available out-of-the-box. Hosting models internally not only protects enterprise IP, but also allows for application of precise fine-tuning approaches and substantial savings on inference costs over time.
+:pencil2: CML은 모델을 호스팅하고 표준 API 메커니즘을 통해 노출하며, 기본 제공 인증 기능을 제공합니다. 내부적으로 모델을 호스팅하면 엔터프라이즈 IP를 보호할 수 있을 뿐만 아니라, 정밀한 파인튜닝 적용과 추론 비용의 장기적인 절감을 가능하게 합니다.
 
-## 8. Launch Final Application
+## 8. 최종 애플리케이션 실행
 
-We are now going to put all the pieces together into a final application that allows for model selection (internal vs external) and a vector DB selection (internal or external). This expemplifies the flexibility of LLM apps built with CML.
+이제 모든 구성 요소를 통합하여 내부/외부 모델 선택 및 벡터 DB 선택(내부 또는 외부)을 허용하는 최종 애플리케이션을 실행합니다.  
+이는 CML로 구축된 LLM 애플리케이션의 유연성을 보여줍니다.
 
-To get started, we're going to revisit the application that we created in step 4. 
+먼저 4단계에서 생성한 애플리케이션으로 돌아갑니다.
 
->**8a.** Go to main project screen and click on _Applications_ in the left sidebar. You will see the application created in step 4 
+> **8a.** 메인 프로젝트 화면으로 이동하여 왼쪽 사이드바에서 _Applications_를 클릭하세요.  
+4단계에서 생성한 애플리케이션을 볼 수 있습니다.  
 ![Alt-text](./assets/step_8-9.png)
 
->**8b.** Click on the three dots on the top right hand corner and select _Application Details_
+> **8b.** 오른쪽 상단의 점 세 개를 클릭한 후 _Application Details_를 선택하세요.  
 ![Alt-text](./assets/step_8-6.png)
 
->**8c.** Select the top section _Settings_. Now you are going to select the new file for the application. Click on the folder icon under the **Script** section. Then select the file path ```8_launch_app_final/llm_app_final.py```
+> **8c.** 상단의 _Settings_ 섹션을 선택하세요. 이제 애플리케이션의 새로운 파일을 선택합니다.  
+**Script** 섹션 아래의 폴더 아이콘을 클릭한 후 파일 경로 ```8_launch_app_final/llm_app_final.py```를 선택하세요.  
 ![Alt-text](./assets/step_8-2.png)
 
->**8d.** Click on _Update Application_ at the bottom of the page.
+> **8d.** 페이지 하단에서 _Update Application_을 클릭하세요.  
 ![Alt-text](./assets/step_8-4.png)
 
->**8e.** Once your application is in _Running_ state click on it to open the app UI. 
+> **8e.** 애플리케이션이 _Running_ 상태가 되면, 애플리케이션을 클릭하여 UI를 엽니다.
 
->**8f.** Inside the application UI, expand the section called _Additional Inputs_
+> **8f.** 애플리케이션 UI에서 _Additional Inputs_ 섹션을 확장하세요.  
 ![Final app with local models](./assets/final_app_1.png)
 
->**8g.** From here you can see all of the application parameters available. Select the model, vector db, and other parameters you'd like to use for each prompt. Finally, you're ready to start asking questions!
+> **8g.** 여기에서 사용할 수 있는 모든 애플리케이션 매개변수를 확인할 수 있습니다.  
+모델, 벡터 DB 및 각 프롬프트에 사용할 기타 매개변수를 선택하세요. 마지막으로 질문을 시작할 준비가 완료되었습니다!  
 ![Final app output](./assets/final_app_2.png)
 
-## :tada: Congratulations! :tada:
-You've learned a lot in the last few hours, but this is just the beginning. [Cloudera Machine Learning](https://www.cloudera.com/products/machine-learning.html) has a lot more to offer for your enterprise as part of an overall [Cloudera Data Platform](https://www.cloudera.com/) on-prem and in the cloud. 
+## :tada: 축하합니다! :tada:
+지난 몇 시간 동안 많은 것을 배웠습니다. 하지만 이는 시작에 불과합니다.  
+[Cloudera Machine Learning](https://www.cloudera.com/products/machine-learning.html)은 온프레미스 및 클라우드에서 [Cloudera Data Platform](https://www.cloudera.com/)의 일부로 귀하의 엔터프라이즈에 더 많은 것을 제공합니다.
+
