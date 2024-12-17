@@ -225,7 +225,7 @@ def get_bedrock_claude_response_with_context(question, context, temperature, tok
               })
 
     # Provide a model ID and call the model with the JSON payload
-    modelId = AWS_FOUNDATION_MODEL_ID
+    modelId = 'anthropic.claude-v2:1'
     response = boto3_bedrock.invoke_model(body=body, modelId=modelId, accept='application/json', contentType='application/json')
     response_body = json.loads(response.get('body').read())
     print("Model results successfully retreived")
