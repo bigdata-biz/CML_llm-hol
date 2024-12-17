@@ -5,6 +5,32 @@ date: "2024-10-08"
 specification_version: 1.0
 prototype_version: 1.1
 
+environment_variables:
+  AWS_ACCESS_KEY_ID:
+    default: ""
+    description: "AWS Access Key ID to use Bedrock"
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    default: ""
+    description: "AWS Secret Access Key to use Bedrock"
+    required: true
+  AWS_FOUNDATION_MODEL_ID:
+    default: "mistral.mistral-7b-instruct-v0:2"
+    description: "AWS Bedrock foundation model id"
+    required: true
+  AWS_DEFAULT_REGION:
+    default: "us-west-2"
+    description: "AWS default region"
+    required: true
+  HF_EMBEDDING_MODEL_REPO:
+    default: "sentence-transformers/all-mpnet-base-v2"
+    description: "Huggingface Embedding model repository"
+    required: true
+  LOCAL_MODEL_ACCESS_KEY:
+    default: ""
+    description: "Local LLM Model Access key"
+    required: false
+
 runtimes: 
   - editor: JupyterLab
     kernel: Python 3.10
