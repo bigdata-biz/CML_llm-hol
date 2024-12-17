@@ -166,13 +166,12 @@ def get_responses(message, history, model, temperature, token_count, vector_db):
     
     context_chunk = get_chroma_context(message) if vector_db == "ChromaDB" else ""
 
-    if model == "'Local Mistral 7B" or "AWS Bedrock Mistral 7B":
-        
+    if 'mistral' in model.lower():
         if vector_db == "None":
             context_chunk = ""
         response = get_mistral_response_with_context(message, context_chunk, temperature, token_count)
-      
-    elif model == "AWS Bedrock Claude v2.1":
+     
+    elif 'claude' in model.lower():
         if vector_db == "None":
             # No context call Bedrock
             context_chunk = ""
@@ -246,7 +245,7 @@ def get_mistral_response_with_context(question, context, temperature, token_coun
             You are a helpful and honest assistant. If you are unsure about an answer, truthfully say "I don't know".
             
             ### Context:
-            {context[:1000]}\n
+            {context}\n
             
             ### Question:
             {question}\n
