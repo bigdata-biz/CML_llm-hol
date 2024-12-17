@@ -2,9 +2,6 @@ import os
 import cmlapi
 import sys
 import gradio as gr
-import pinecone
-from pinecone import Pinecone, ServerlessSpec
-from typing import Any, Union, Optional
 from pydantic import BaseModel
 import tensorflow as tf
 from sentence_transformers import SentenceTransformer
@@ -16,40 +13,54 @@ import boto3
 from botocore.config import Config
 from huggingface_hub import hf_hub_download
 
-
-USE_PINECONE = True # Set this to False avoid any Pinecone calls
-
-EMBEDDING_MODEL_REPO = "sentence-transformers/all-mpnet-base-v2"
+import chromadb
+from chromadb.utils import embedding_functions
 
 
-if USE_PINECONE:
-    PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
-    PINECONE_INDEX = os.getenv('PINECONE_INDEX')
+AWS_FOUNDATION_MODEL_ID = os.environ.get("AWS_FOUNDATION_MODEL_ID")
 
-    print("initialising Pinecone connection...")
-    pc = Pinecone(api_key=PINECONE_API_KEY)
-    print("Pinecone initialised")
+EMBEDDING_MODEL_REPO = os.environ.get("HF_EMBEDDING_MODEL_REPO")
+EMBEDDING_MODEL_NAME = EMBEDDING_MODEL_REPO.split('/')[-1]
+CHROMA_COLLECTION_NAME = "cml-default"
+embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=EMBEDDING_MODEL_REPO)
 
-    print(f"Getting '{PINECONE_INDEX}' as object...")
-    index = pc.Index(PINECONE_INDEX)
-    print("Success")
+# ChromaDB 연결
+chroma_client = chromadb.PersistentClient(path="/home/cdsw/chroma-data")
 
-    # Get latest statistics from index
-    current_collection_stats = index.describe_index_stats()
-    print('Total number of embeddings in Pinecone index is {}.'.format(current_collection_stats.get('total_vector_count')))
+try:
+    chroma_collection = chroma_client.get_collection(name=CHROMA_COLLECTION_NAME, embedding_function=embedding_function)
+    print("ChromaDB collection loaded.")
+except:
+    chroma_collection = chroma_client.create_collection(name=CHROMA_COLLECTION_NAME, embedding_function=embedding_function)
+    print("ChromaDB collection created.")
 
-## TO DO GET MODEL DEPLOYMENT
-## Need to get the below prgramatically in the future iterations
-client = cmlapi.default_client(url=os.getenv("CDSW_API_URL").replace("/api/v1", ""), cml_api_key=os.getenv("CDSW_APIV2_KEY"))
-projects = client.list_projects(include_public_projects=True, search_filter=json.dumps({"name": "Shared LLM Model for Hands on Lab"}))
-project = projects.projects[0]
+# ChromaDB에서 가장 유사한 문서 검색
+def get_chroma_context(query, top_k=3):
+    print("Querying ChromaDB for similar documents...")
+    results = chroma_collection.query(query_texts=[query], n_results=top_k)
+    
+    # 검색된 문서들을 하나의 문자열로 결합
+    if results["documents"]:
+        context = "\n\n".join(results["documents"][0])
+        print(f"Retrieved context: {context}")
+        return context
+    else:
+        print("No relevant documents found.")
+        return ""
 
-## Here we assume that only one model has been deployed in the project, if this is not true this should be adjusted (this is reflected by the placeholder 0 in the array)
-model = client.list_models(project_id=project.id)
-selected_model = model.models[0]
-
-## Save the access key for the model to the environment variable of this project
-MODEL_ACCESS_KEY = selected_model.access_key
+if os.environ.get("LOCAL_MODEL_ACCESS_KEY") == "":
+    client = cmlapi.default_client(url=os.getenv("CDSW_API_URL").replace("/api/v1", ""), cml_api_key=os.getenv("CDSW_APIV2_KEY"))
+    projects = client.list_projects(include_public_projects=True, search_filter=json.dumps({"name": "LLM Model deploy for Hands on Lab"}))
+    project = projects.projects[0]
+    
+    ## Here we assume that only one model has been deployed in the project, if this is not true this should be adjusted (this is reflected by the placeholder 0 in the array)
+    model = client.list_models(project_id=project.id)
+    selected_model = model.models[0]
+    
+    ## Save the access key for the model to the environment variable of this project
+    MODEL_ACCESS_KEY = selected_model.access_key
+else:
+    MODEL_ACCESS_KEY = os.environ.get("LOCAL_MODEL_ACCESS_KEY")
 
 MODEL_ENDPOINT = os.getenv("CDSW_API_URL").replace("https://", "https://modelservice.").replace("/api/v1", "/model?accessKey=")
 MODEL_ENDPOINT = MODEL_ENDPOINT + MODEL_ACCESS_KEY
@@ -125,10 +136,10 @@ def main():
         fn=get_responses, 
         title="Enterprise Custom Knowledge Base Chatbot",
         description = DESC,
-        additional_inputs=[gr.Radio(['Local Mistral 7B', 'AWS Bedrock Claude v2.1'], label="Select Foundational Model", value="AWS Bedrock Claude v2.1", visible=False), 
+        additional_inputs=[gr.Radio(['Local Mistral 7B', 'AWS Bedrock Mistral 7B', "AWS Bedrock Claude v2.1"], label="Select Foundational Model", value="AWS Bedrock Mistral 7B", visible=True), 
                            gr.Slider(minimum=0.01, maximum=1.0, step=0.01, value=0.5, label="Select Temperature (Randomness of Response)"),
                            gr.Radio(["50", "100", "250", "500", "1000"], label="Select Number of Tokens (Length of Response)", value="250"),
-                           gr.Radio(['None', 'Pinecone'], label="Vector Database Choices", value="None")],
+                           gr.Radio(['None', 'ChromaDB'], label="Vector Database Choices", value="None")],
         retry_btn = None,
         undo_btn = None,
         clear_btn = None,
@@ -152,81 +163,37 @@ def get_responses(message, history, model, temperature, token_count, vector_db):
     #chat_history_string = '; '.join([strng for xchng in history for strng in xchng])
     #print(f"Chat so far {history}")
     
-    
-    if model == "'Local Mistral 7B":
+    if vector_db == "ChromaDB":
+        context_chunk = get_chroma_context(message)
+    else:
+        context_chunk = ""
+
+    if model == "'Local Mistral 7B" or "AWS Bedrock Mistral 7B":
         
         if vector_db == "None":
             context_chunk = ""
-            response = get_llama2_response_with_context(message, context_chunk, temperature, token_count)
-        
-            # Stream output to UI
-            for i in range(len(response)):
-                time.sleep(0.02)
-                yield response[:i+1]
-                
-        elif vector_db == "Pinecone":
-            
-            # Stream output to UI
-            for i in range(len(response)):
-                time.sleep(0.02)
-                yield response[:i+1]
+        response = get_mistral_response_with_context(message, context_chunk, temperature, token_count)
+    
+        # Stream output to UI
+        for i in range(len(response)):
+            time.sleep(0.02)
+            yield response[:i+1]
     
     elif model == "AWS Bedrock Claude v2.1":
         if vector_db == "None":
             # No context call Bedrock
             context_chunk = ""
-            response = get_bedrock_response_with_context(message, context_chunk, temperature, token_count)
-        
-            # Stream output to UI
-            for i in range(len(response)):
-                time.sleep(0.02)
-                yield response[:i+1]
-                
-        elif vector_db == "Pinecone":
-            # Vector search the index
-            context_chunk, source, score = get_nearest_chunk_from_pinecone_vectordb(index, message)
-            
-            # Call Bedrock model
-            response = get_bedrock_response_with_context(message, context_chunk, temperature, token_count)
-            
-            response = f"{response}\n\n For additional info see: {url_from_source(source)}"
-            
-            # Stream output to UI
-            for i in range(len(response)):
-                time.sleep(0.01)
-                yield response[:i+1]
+        response = get_bedrock_claude_response_with_context(message, context_chunk, temperature, token_count)
+    
+        # Stream output to UI
+        for i in range(len(response)):
+            time.sleep(0.02)
+            yield response[:i+1]
 
 def url_from_source(source):
     url = source.replace('/home/cdsw/data/https:/', 'https://').replace('.txt', '.html')
     return f"[Reference 1]({url})"
     
-
-# Get embeddings for a user question and query Pinecone vector DB for nearest knowledge base chunk
-def get_nearest_chunk_from_pinecone_vectordb(index, question):
-    # Generate embedding for user question with embedding model
-    retriever = SentenceTransformer(EMBEDDING_MODEL_REPO)
-    xq = retriever.encode([question]).tolist()
-    xc = index.query(vector=xq, top_k=5,include_metadata=True)
-    
-    matching_files = []
-    scores = []
-    for match in xc['matches']:
-        # extract the 'file_path' within 'metadata'
-        file_path = match['metadata']['file_path']
-        # extract the individual scores for each vector
-        score = match['score']
-        scores.append(score)
-        matching_files.append(file_path)
-
-    # Return text of the nearest knowledge base chunk 
-    # Note that this ONLY uses the first matching document for semantic search. matching_files holds the top results so you can increase this if desired.
-    response = load_context_chunk_from_data(matching_files[0])
-    sources = matching_files[0]
-    score = scores[0]
-    
-    print(f"Response of context chunk {response}")
-    return response, sources, score
-    #return "Cloudera is an Open Data Lakhouse company", "http://cloudera.com", 89 
 
 # Return the Knowledge Base doc based on Knowledge Base ID (relative file path)
 def load_context_chunk_from_data(id_path):
@@ -234,7 +201,7 @@ def load_context_chunk_from_data(id_path):
         return f.read()
 
 
-def get_bedrock_response_with_context(question, context, temperature, token_count):
+def get_bedrock_claude_response_with_context(question, context, temperature, token_count):
     
     # Supply different instructions, depending on whether or not context is provided
     if context == "":
@@ -263,7 +230,7 @@ def get_bedrock_response_with_context(question, context, temperature, token_coun
               })
 
     # Provide a model ID and call the model with the JSON payload
-    modelId = 'anthropic.claude-v2:1'
+    modelId = AWS_FOUNDATION_MODEL_ID
     response = boto3_bedrock.invoke_model(body=body, modelId=modelId, accept='application/json', contentType='application/json')
     response_body = json.loads(response.get('body').read())
     print("Model results successfully retreived")
@@ -275,35 +242,36 @@ def get_bedrock_response_with_context(question, context, temperature, token_coun
 
     
 # Pass through user input to LLM model with enhanced prompt and stop tokens
-def get_llama2_response_with_context(question, context, temperature, token_count):
-
-    question = "Answer this question based on the given context. Question: " + str(question)
-    
-    question_and_context = question + " Here is the context: " + str(context)
-
+def get_mistral_response_with_context(question, context, temperature, token_count):
     try:
-        
-        # Following LLama's spec for prompt engineering
-        llama_sys = f"<<SYS>>\n You are a helpful, respectful and honest assistant. If you are unsurae about an answer, truthfully say \"I don't know\".\n<</SYS>>\n\n"
-        llama_inst = f"[INST]Use your own knowledge and additionally use the following information to answer the user's question: {context} [/INST]"
-        question_and_context = f"{llama_sys} {llama_inst} [INST] User: {question} [/INST]"
-        
-        data={ "request": {"prompt":question_and_context,"temperature":temperature,"max_new_tokens":token_count,"repetition_penalty":1.0} }
-        
-        r = requests.post(MODEL_ENDPOINT, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+        instruction = "You are a helpful and honest assistant. If you are unsure about an answer, truthfully say \"I don't know\""
+        prompt = f"""\
+        ### Instruction:
+        {instruction}\n
+        ### context(sample):
+        {context[:50]}\n
+        ### Question:
+        {question}\n
+        ### Response:
+        """
+        # Make request data
+        data={ "request": {"prompt":prompt,
+                           "temperature":temperature,
+                           "max_new_tokens":token_count,
+                           "repetition_penalty":1.2} }
+
+        response = requests.post(MODEL_ENDPOINT, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+        result = response.json()['response']['result']
         
         # Logging
         print(f"Request: {data}")
-        print(f"Response: {r.json()}")
+        print(f"{result}")
         
-        #no_inst_response = str(r.json()['response'])[len(question_and_context)+2:]
-            
-        return "TEST" #no_inst_response
+        return result
         
     except Exception as e:
         print(e)
         return e
-
 
 if __name__ == "__main__":
     main()
