@@ -18,11 +18,10 @@ LLM의 적용 범위는 산업 전반에 걸쳐 매우 넓지만, 이 실습의 
 - [0. CML에 들어가기](#0-cml-시작하기)
 - [1. CML을 통한 Amazon Bedrock 탐색](#1-cml을-통한-amazon-bedrock-탐색)
 - [2. 데이터 스크래핑 및 Chroma DB에 데이터 Insert](#2-데이터-스크래핑-및-chroma-db에-데이터-insert)
-- [3. CML 애플리케이션 배포](#4-cml-애플리케이션-배포)
-- [5. Vector DB를 Chroma DB로 전환하기](#5-vector-db를-chroma-db로-전환하기)
-- [6. Langchain](#6-langchain)
-- [7. 로컬에 호스팅된 Mistral 모델 사용하기](#7-로컬에-호스팅된-mistral-모델-사용하기)
-- [8. 최종 애플리케이션 실행](#8-최종-애플리케이션-실행)
+- [3. CML 애플리케이션 배포](#3-cml-애플리케이션-배포)
+- [4. Langchain](#4-langchain)
+- [5. 최종 애플리케이션 실행](#5-최종-애플리케이션-실행)
+
 
 ## 0. CML 시작하기
 
@@ -244,4 +243,3 @@ Langchain을 사용하는 장점은, 체인 객체를 한 번 생성하면 벡�
 ## :tada: 축하합니다! :tada:
 지난 몇 시간 동안 많은 것을 배웠습니다. 하지만 이는 시작에 불과합니다.  
 [Cloudera Machine Learning](https://www.cloudera.com/products/machine-learning.html)은 온프레미스 및 클라우드에서 [Cloudera Data Platform](https://www.cloudera.com/)의 일부로 귀하의 엔터프라이즈에 더 많은 것을 제공합니다.
-
