@@ -76,7 +76,7 @@ CML이 처음이라면, 대시보드를 통해 사용할 수 있는 정보를 �
 > **1h.** ```prototype_with_cml_model.ipynb``` 파일을 열어 CML 환경에서 배포된 LLM 모델을 호출해보세요. 노트북의 각 셀 실행 방법은 동일합니다.
 ![Alt text](./assets/jupypter-session-local-mistral.png)
 
-:pencil2: CML은 모델을 호스팅하고 표준 API 메커니즘을 통해 노출하며, 기본 제공 인증 기능을 제공합니다. 내부적으로 모델을 호스팅하면 엔터프라이즈 IP를 보호할 수 있을 뿐만 아니라, 정밀한 파인튜닝 적용과 추론 비용의 장기적인 절감을 가능하게 합니다.
+:pencil2: CML은 모델을 호스팅하고 표준 API 메커니즘을 통해 노출하며, 기본 제공 인증 기능을 제공합니다. 내부적으로 모델을 호스팅하면 엔터프라이즈 IP를 보호할 수 있을 뿐만 아니라, 정밀한 파인튜닝 적용과 추론 비용의 장기적인 절감을 가능하게 합니다. <br>
 :pencil2: 이제 CML 세션 생성, JupyterLab 편집기 사용, 그리고 3rd party LLM 제공자와 상호작용하는 과정을 익혔습니다. 모든 작업은 격리되고 안전한 컴퓨팅 팟에서 이루어졌습니다.
 
 ## 2. 데이터 스크래핑 및 Chroma DB에 데이터 Insert
@@ -87,7 +87,7 @@ CML이 처음이라면, 대시보드를 통해 사용할 수 있는 정보를 �
 
 CML에서 _Job_ 을 생성하는 방법은 두 가지입니다: UI를 통해 생성하거나 [CML의 APIv2](https://docs.cloudera.com/machine-learning/cloud/api/topics/ml-api-v2.html)를 사용하여 프로그래밍 방식으로 생성하는 것입니다. 실제 환경에서는 두 번째 옵션을 사용하는 경우가 많지만, 우선은 UI를 통해 Job을 생성하여 과정을 더 잘 이해하는 데 집중합니다.
 
-> **2a.** 프로젝트에 이미 _Pull and Convert HTMLS to TXT_ 라는 Job이 생성되어 있습니다. 이 Job은 새로 생성할 Job의 의존성(dependency)이 됩니다. 아직 실행하지는 마세요.  
+> **2a.** 프로젝트에 이미 _Pull and Convert HTMLS to TXT_ 라는 Job이 생성되어 있습니다. 이 Job은 새로 생성할 Job의 의존성(dependency)이 됩니다. 아직 클릭하지는 마세요
 ![Alt text](./assets/html-scrape-1.png)
 
 > **2b.** 왼쪽 사이드바에서 _Jobs_ 를 클릭하세요.  
@@ -106,7 +106,7 @@ CML에서 _Job_ 을 생성하는 방법은 두 가지입니다: UI를 통해 생
 > - **Edition**: _Nvidia GPU_  
 
 > **2g.** **Schedule**에서 _Dependent_ 를 선택한 다음, Job으로 _Pull and Convert HTMLS to TXT_ 를 선택하세요.  
-![Alt text](./assets/html-scrape-job-parameters.png)
+![Alt text](./assets/job-details.png)
 
 > **2h.** 화면 맨 아래로 스크롤하여 _Create Job_ 을 클릭하세요.
 
