@@ -41,12 +41,13 @@ def get_chroma_context(query, top_k=3):
     
     # 검색된 문서들을 하나의 문자열로 결합
     if results["documents"]:
-        context = "\n\n".join(results["documents"][0])
+        context = "\n\n".join([" ".join(doc) for doc in results["documents"]])
         print(f"Retrieved context: {context}")
         return context
     else:
         print("No relevant documents found.")
         return ""
+
 
 if os.environ.get("LOCAL_MODEL_ACCESS_KEY") == "":
     client = cmlapi.default_client(url=os.getenv("CDSW_API_URL").replace("/api/v1", ""), cml_api_key=os.getenv("CDSW_APIV2_KEY"))
@@ -155,41 +156,35 @@ def main():
                 server_port=int(os.getenv('CDSW_READONLY_PORT')))
     print("Gradio app ready")
 
+    
 # Helper function for generating responses for the QA app
 def get_responses(message, history, model, temperature, token_count, vector_db):
-    
     
     # Process chat history
     #chat_history_string = '; '.join([strng for xchng in history for strng in xchng])
     #print(f"Chat so far {history}")
     
-    if vector_db == "ChromaDB":
-        context_chunk = get_chroma_context(message)
-    else:
-        context_chunk = ""
+    context_chunk = get_chroma_context(message) if vector_db == "ChromaDB" else ""
 
     if model == "'Local Mistral 7B" or "AWS Bedrock Mistral 7B":
         
         if vector_db == "None":
             context_chunk = ""
         response = get_mistral_response_with_context(message, context_chunk, temperature, token_count)
-    
-        # Stream output to UI
-        for i in range(len(response)):
-            time.sleep(0.02)
-            yield response[:i+1]
-    
+      
     elif model == "AWS Bedrock Claude v2.1":
         if vector_db == "None":
             # No context call Bedrock
             context_chunk = ""
         response = get_bedrock_claude_response_with_context(message, context_chunk, temperature, token_count)
     
-        # Stream output to UI
-        for i in range(len(response)):
-            time.sleep(0.02)
-            yield response[:i+1]
+    # Stream output to UI
+    for i in range(len(response)):
+        time.sleep(0.01)
+        yield response[:i+1]
 
+  
+  
 def url_from_source(source):
     url = source.replace('/home/cdsw/data/https:/', 'https://').replace('.txt', '.html')
     return f"[Reference 1]({url})"
@@ -244,34 +239,47 @@ def get_bedrock_claude_response_with_context(question, context, temperature, tok
 # Pass through user input to LLM model with enhanced prompt and stop tokens
 def get_mistral_response_with_context(question, context, temperature, token_count):
     try:
-        instruction = "You are a helpful and honest assistant. If you are unsure about an answer, truthfully say \"I don't know\""
-        prompt = f"""\
-        ### Instruction:
-        {instruction}\n
-        ### context(sample):
-        {context[:50]}\n
-        ### Question:
-        {question}\n
-        ### Response:
-        """
-        # Make request data
-        data={ "request": {"prompt":prompt,
-                           "temperature":temperature,
-                           "max_new_tokens":token_count,
-                           "repetition_penalty":1.2} }
-
+        # Prompt 구조 통일
+        if context:
+            prompt = f"""
+            ### Instruction:
+            You are a helpful and honest assistant. If you are unsure about an answer, truthfully say "I don't know".
+            
+            ### Context:
+            {context[:1000]}\n
+            
+            ### Question:
+            {question}\n
+            
+            ### Response:
+            """
+        else:
+            prompt = f"""
+            ### Instruction:
+            You are a helpful and honest assistant. If you are unsure about an answer, truthfully say "I don't know".
+            
+            ### Question:
+            {question}\n
+            
+            ### Response:
+            """
+        # 요청 생성 및 반환
+        data = {
+            "request": {"prompt": prompt,
+                        "temperature": temperature,
+                        "max_new_tokens": token_count,
+                        "repetition_penalty": 1.2}
+        }
         response = requests.post(MODEL_ENDPOINT, data=json.dumps(data), headers={'Content-Type': 'application/json'})
-        result = response.json()['response']['result']
+        result = response.json()['response']['result'].split("### Response:")[-1].strip()  
         
-        # Logging
         print(f"Request: {data}")
-        print(f"{result}")
-        
+        print(f"Response: {result}")
         return result
-        
+
     except Exception as e:
         print(e)
-        return e
+        return str(e)
 
 if __name__ == "__main__":
     main()
