@@ -37,7 +37,7 @@ SSO 로그인 링크를 사용하면 Cloudera Data Platform의 홈 화면으로 
 CML이 처음이라면, 대시보드를 통해 사용할 수 있는 정보를 잠시 탐색해 보세요.  
 
 워크스페이스를 구성하는 데는 _Project_ 라는 개념이 사용됩니다. 각 _Project_ 는 일반적으로 원격 저장소(e.g., Git)와 연결되어 있으며 여러 Collaborator 가 함께 작업할 수 있습니다. 시간을 절약하기 위해 _Hands on Lab Workshop with LLM_ 프로젝트가 미리 생성되어 있으며, 해당 프로젝트의 유일한 _소유자(Owner)_ 는 사용자입니다. 
-( _LLM Model deploy for Hands on Lab_ 프로젝트가 보일 수 있지만, 지금은 신경쓰지 않으셔도 됩니다)
+
 
 > **0c.** 준비가 되면 프로젝트를 클릭하세요:  
 ![Alt-text](./assets/cml_intro-1.png)
@@ -157,7 +157,7 @@ CML은 [flask](https://flask.palletsprojects.com/en/3.0.x/), [streamlit](https:/
 > * **Kernel:** _Python 3.10_  
 > * **Edition:** _Nvidia GPU_
 
-> **3h.** 리소스 프로필로 _2 vCPU / 8 GB Memory_를 선택하세요.  
+> **3h.** 리소스 프로필로 _2 vCPU / 8 GB Memory_ 를 선택하세요.  
 ![Alt text](./assets/image_app.png)
 
 > **3i.** 페이지 하단의 _Create Application_ 을 클릭하세요.
@@ -176,15 +176,37 @@ CML은 [flask](https://flask.palletsprojects.com/en/3.0.x/), [streamlit](https:/
 - What is ML Runtime?  
 - What version of datalake is compatible with CML 2.0.45?  
 - What's the latest version of the cml? When was it released? 
-![alt text](.assets/../assets/image_app3.png)
 
-_Bonus question_ 마지막 질문(CML 릴리스에 대한 질문)에서 모델이 예상한 결과를 반환하지 않은 이유는 무엇일까요? 이를 해결할 수 있는 방법에는 어떤 것들이 있을까요?
+![alt text](.assets/../assets/image_app3.png)
 
 또한 애플리케이션 응답 방식을 변경하기 위해 하단의 매개변수를 조정할 수 있습니다. ChromaDB 사용 여부(즉, 검색 증강 비활성화), 응답 길이 조정, _Temperature_ (창의성/무작위성) 조정이 가능합니다. 벡터 데이터베이스를 사용하는 응답은 더 많은 토큰을 입력 컨텍스트로 처리해야 하므로 시간이 더 걸릴 수 있습니다.
 
-:pencil2: CML의 주요 기능 중 하나는 데이터 과학 워크플로의 일부로 통합된 애플리케이션을 호스팅하는 것입니다. 실무자는 신속하게 반복하며 이해관계자에게 통찰력, 기능, 프로토타입을 안전하게 공유할 수 있습니다.
+_Bonus_ UI에서 배포한 애플리케이션은 CML APIv2를 통해서도 배포가 가능합니다. 이를 통해 자동화된 App 배포를 활용이 가능합니다.
+
+> **3l.** 이전 단계에서 사용한 세션과 동일한 조건으로  _세션(Session)_ 을 열어주세요
+> - **Editor**: _JupyterLab_  
+> - **Kernel**: _Python 3.10_  
+> - **Edition**: _Nvidia GPU_  
+
+> **3m.** _3_launch_hosted_app/create_llm_application.ipynb_ 노트북 파일을 열어 내용을 확인하세요.
+> **3n.** 순서대로 실행 시킨 후  _Applications_ 으로 이동하여 결과를 확인하세요. 정상 실행되었다면 새로운 애플리케이션이 생성됩니다.
+
+
+:pencil2: CML의 주요 기능 중 하나는 데이터 과학 워크플로의 일부로 통합된 애플리케이션을 호스팅하는 것입니다. 
+
+
+_Bonus_ Cloudera 에서 제공하는 다양한 AMPs 외에도 사용자가 직접 정의한 AMPs를 등록하여 활용할 수도 있습니다.
+금일 실습에 사용한 _Hands on Lab Workshop with LLM_ 프로젝트의 환경 세팅을 포함하여 현재 CML 환경에서 호스팅되고 있는 LLM 모델에 대한 배포(_LLM Model deploy for Hands on Lab_ 프로젝트)는 모두 _AMPs_ 를 활용하였습니다.
+![alt text](.assets/../assets/handson-amp.png)
+
+_Hands on Lab Workshop with LLM_ 클릭하고, _Configure & Deploy_ 를 클릭하면 실습에 필요한 패키지 설치 및 job 등록이 자동으로 진행됩니다.
+![alt text](.assets/../assets/handson-project-amp.png)
+:pencil2: AMPs를 활용하면 사용자가 정의한 다양한 프로토타입을 쉽게 공유하고, 활용할 수 있습니다.
+
 
 ## :tada: 축하드립니다! 실습을 완료하였습니다. :tada:
+
+
 [Cloudera Machine Learning](https://www.cloudera.com/products/machine-learning.html)은 온프레미스 및 클라우드에서 [Cloudera Data Platform](https://www.cloudera.com/)의 일부로 귀하의 엔터프라이즈에 더 많은 것을 제공합니다.
 
 Source: https://github.com/cloudera/CML_llm-hol.git
