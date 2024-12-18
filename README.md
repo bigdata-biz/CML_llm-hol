@@ -16,11 +16,9 @@ LLM의 적용 범위는 산업 전반에 걸쳐 매우 넓지만, 이 실습의 
 단계 간에 의존성이 있으므로 연습 순서를 따르는 것이 중요합니다.  
 
 - [0. CML에 들어가기](#0-cml-시작하기)
-- [1. CML을 통한 Amazon Bedrock 탐색](#1-cml을-통한-amazon-bedrock-탐색)
+- [1. CML환경에서 LLM 모델 탐색하기](#1-cml환경에서-llm-모델-탐색하기)
 - [2. 데이터 스크래핑 및 Chroma DB에 데이터 Insert](#2-데이터-스크래핑-및-chroma-db에-데이터-insert)
 - [3. CML 애플리케이션 배포](#3-cml-애플리케이션-배포)
-- ~[ 4. Langchain](#4-langchain)~
-- ~[5. 최종 애플리케이션 실행](#5-최종-애플리케이션-실행)~
 
 
 
@@ -47,9 +45,10 @@ CML이 처음이라면, 대시보드를 통해 사용할 수 있는 정보를 �
 프로젝트 페이지를 익히는 데 잠시 시간을 가져보세요. 프로젝트에는 이제 필요한 모든 파일(코드베이스)이 있으며, 아래에 README 파일, 왼쪽 열에 프로젝트별 옵션 등이 포함되어 있습니다. 이 실습 과정에서 여기 나열된 많은 기능을 사용하게 됩니다.
 ![Project](./assets/project_main.png)
 
-## 1. CML을 통한 Amazon Bedrock 탐색
+## 1. CML환경에서 LLM 모델 탐색하기
 
-이 첫 번째 섹션에서는 Amazon의 Bedrock 서비스를 통해 모델(~Anthropic의 Claude~ Mistral)과 상호작용합니다. 이를 위해 Jupyter Notebook UI를 사용하여 _세션(Session)_ 을 시작합니다.  
+첫 번째 섹션에서는 CML에서 AWS Bedrock(~Anthropic의 Claude~ Mistral) 서비스와 CML 환경에서 배포된 LLM 모델(Mistral)과 상호작용하는 방법을 탐색합니다.
+이를 위해 Jupyter Notebook UI를 사용하여 _세션(Session)_ 을 시작합니다.  
 
 > **1a.** 오른쪽 상단에서 _New Session_ 을 클릭하여 세션을 시작하세요. 또는 사이드바에서 _Sessions_ 를 클릭한 다음 _New Session_ 을 클릭해도 됩니다.  
 ![Alt text](./assets/open-session.png)
@@ -76,8 +75,8 @@ CML이 처음이라면, 대시보드를 통해 사용할 수 있는 정보를 �
 > **1h.** ```prototype_with_cml_model.ipynb``` 파일을 열어 CML 환경에서 배포된 LLM 모델을 호출해보세요. 노트북의 각 셀 실행 방법은 동일합니다.
 ![Alt text](./assets/jupypter-session-local-mistral.png)
 
-:pencil2: CML은 모델을 호스팅하고 표준 API 메커니즘을 통해 노출하며, 기본 제공 인증 기능을 제공합니다. 내부적으로 모델을 호스팅하면 엔터프라이즈 IP를 보호할 수 있을 뿐만 아니라, 정밀한 파인튜닝 적용과 추론 비용의 장기적인 절감을 가능하게 합니다. <br>
-:pencil2: 이제 CML 세션 생성, JupyterLab 편집기 사용, 그리고 3rd party LLM 제공자와 상호작용하는 과정을 익혔습니다. 모든 작업은 격리되고 안전한 컴퓨팅 팟에서 이루어졌습니다.
+:pencil2: 이제 CML 세션 생성, JupyterLab 편집기 사용, 그리고 3rd party LLM 제공자와 상호작용하는 과정을 익혔습니다. 모든 작업은 격리되고 안전한 컴퓨팅 팟에서 이루어졌습니다. <br>
+:pencil2: CML은 모델을 호스팅하고 표준 API 메커니즘을 통해 노출하며, 기본 제공 인증 기능을 제공합니다. 내부적으로 모델을 호스팅하면 엔터프라이즈 IP를 보호할 수 있을 뿐만 아니라, 정밀한 파인튜닝 적용과 추론 비용의 장기적인 절감을 가능하게 합니다. 
 
 ## 2. 데이터 스크래핑 및 Chroma DB에 데이터 Insert
 
@@ -131,7 +130,6 @@ CML에서 _Job_ 을 생성하는 방법은 두 가지입니다: UI를 통해 생
 
 > **2n.** ```chroma_vectordb_usage.ipynb``` 파일을 열어 Chroma vector DB 사용 방법을 확인하고 실행해 보세요.
 
-----
 ## 3. CML 애플리케이션 배포
 
 지금까지 Jupyter 노트북을 통해 모델과 벡터 데이터베이스를 다뤘습니다. 이제 CML 애플리케이션을 통해 사용자가 LLM 솔루션과 상호작용하는 방법을 알아보겠습니다.  
@@ -142,7 +140,7 @@ CML은 [flask](https://flask.palletsprojects.com/en/3.0.x/), [streamlit](https:/
 
 > **3a.** 세션 상단의 ![<-- Project](./assets/project-btn.png) 버튼을 클릭하여 프로젝트 화면으로 돌아가세요.
 
-> **3b.** 왼쪽 사이드바에서 _Applications_를 클릭하세요.  
+> **3b.** 왼쪽 사이드바에서 _Applications_ 를 클릭하세요.  
 ![Alt-text](./assets/deploy-cml-app-button.png)
 
 > **3c.** 화면 중앙의 _New Application_ 버튼을 클릭하세요.
@@ -171,16 +169,14 @@ CML은 [flask](https://flask.palletsprojects.com/en/3.0.x/), [streamlit](https:/
 
 또한 이 스크립트가 이전에 벡터 데이터베이스를 쿼리하는 데 사용한 코드와 몇 가지 기능을 공유하는 것을 알 수 있습니다. 새로운 응답 함수는 사용자가 선택한 모델에 따라 응답을 완성하는 것도 고려합니다. 이는 CML의 모듈화 기능의 강력함을 보여줍니다.
 
-> **3j.** 애플리케이션이 성공적으로 배포되었는지 확인하세요. 메시지를 통해 확인할 수 있습니다.  
+> **3j.** 애플리케이션이 성공적으로 배포되었는지 확인하세요. 정상 배포된 상태라면 클릭 시 새 탭에서 애플리케이션이 열리는 것을 확인할 수 있습니다.
 ![Alt-text](./assets/image-click-on-app.png)
 
-> **3k.** 애플리케이션의 URL을 클릭하여 gradio UI로 이동하세요. 새 탭에서 애플리케이션이 열리는 것을 확인할 수 있습니다.  
-![alt text](.assets/../assets/image_app3.png)
-
-CML에 대해 다양한 질문을 해보세요. 시작하는 데 도움이 되는 몇 가지 예는 다음과 같습니다:  
+> **3k.** CML에 대해 다양한 질문을 해보세요. 시작하는 데 도움이 되는 몇 가지 예는 다음과 같습니다:  
 - What is ML Runtime?  
 - What version of datalake is compatible with CML 2.0.45?  
-- What is the latest CML release?  
+- What's the latest version of the cml? When was it released? 
+![alt text](.assets/../assets/image_app3.png)
 
 _Bonus question_ 마지막 질문(CML 릴리스에 대한 질문)에서 모델이 예상한 결과를 반환하지 않은 이유는 무엇일까요? 이를 해결할 수 있는 방법에는 어떤 것들이 있을까요?
 
@@ -188,60 +184,7 @@ _Bonus question_ 마지막 질문(CML 릴리스에 대한 질문)에서 모델�
 
 :pencil2: CML의 주요 기능 중 하나는 데이터 과학 워크플로의 일부로 통합된 애플리케이션을 호스팅하는 것입니다. 실무자는 신속하게 반복하며 이해관계자에게 통찰력, 기능, 프로토타입을 안전하게 공유할 수 있습니다.
 
-```
-## (수정 전) 4. Langchain
-
-지금까지 우리는 LLM, 벡터 데이터베이스, 애플리케이션, 코드베이스, 그리고 기본 플랫폼과 상호작용할 수 있도록 구성된 여러 구성 요소를 살펴보았습니다.  
-Langchain은 이러한 구성 요소(및 추가 구성 요소)를 유연하게 연결할 수 있는 강력한 라이브러리입니다.  
-이번 실습에서는 Langchain의 특정 사용 사례를 살펴봅니다. 더 많은 정보를 보려면 [Intro to Langchain](https://python.langchain.com/docs/get_started/introduction)을 참조하세요.
-
-이 섹션에서는 Langchain을 사용하여 다음 구성 요소를 "체인"으로 연결합니다:
-- Amazon Bedrock 모델
-- 로컬에 호스팅된 Chroma 벡터 데이터베이스
-- 프롬프트 템플릿
-
-Langchain을 사용하는 장점은, 체인 객체를 한 번 생성하면 벡터 저장소를 쿼리한 다음, LLM으로 경로를 보내 응답을 받는 작업을 사용자 정의 함수에 의존하지 않고 단일 함수에서 처리할 수 있다는 점입니다.  
-체인의 구성 요소는 필요에 따라 쉽게 교체할 수 있습니다.
-
-> **4a.** 세션으로 이동하세요. 세션이 만료된 경우 새 세션을 생성하세요.
-
-> **4b.** ```6_langchain_introduction``` 경로로 이동한 뒤, ```Langchain_Bedrock_Chroma.ipynb```라는 제목의 노트북을 엽니다.  
-![Exercise 6 notebook](./assets/langchain-notebook.png)
-
-> **4c.** 노트북의 셀을 실행하며 작업을 진행하세요. 완료한 후 Jupyter 세션을 종료하고 이 가이드로 돌아오세요.
-
-:pencil2: 이번 실습에서는 인기 있는 체이닝 패키지를 익히고, Bedrock, Chroma, 특정 프롬프트 템플릿과 상호작용하기 위한 체인을 구축하는 CML 세션에 이를 적용했습니다.
-
-## (수정 전) 5. 최종 애플리케이션 실행
-
-이제 모든 구성 요소를 통합하여 내부/외부 모델 선택 및 벡터 DB 선택(내부 또는 외부)을 허용하는 최종 애플리케이션을 실행합니다.  
-이는 CML로 구축된 LLM 애플리케이션의 유연성을 보여줍니다.
-
-먼저 3단계에서 생성한 애플리케이션으로 돌아갑니다.
-
-> **5a.** 메인 프로젝트 화면으로 이동하여 왼쪽 사이드바에서 _Applications_를 클릭하세요.  
-4단계에서 생성한 애플리케이션을 볼 수 있습니다.  
-![Alt-text](./assets/step_8-9.png)
-
-> **5b.** 오른쪽 상단의 점 세 개를 클릭한 후 _Application Details_를 선택하세요.  
-![Alt-text](./assets/step_8-6.png)
-
-> **5c.** 상단의 _Settings_ 섹션을 선택하세요. 이제 애플리케이션의 새로운 파일을 선택합니다.  
-**Script** 섹션 아래의 폴더 아이콘을 클릭한 후 파일 경로 ```8_launch_app_final/llm_app_final.py```를 선택하세요.  
-![Alt-text](./assets/step_8-2.png)
-
-> **5d.** 페이지 하단에서 _Update Application_을 클릭하세요.  
-![Alt-text](./assets/step_8-4.png)
-
-> **5e.** 애플리케이션이 _Running_ 상태가 되면, 애플리케이션을 클릭하여 UI를 엽니다.
-
-> **5f.** 애플리케이션 UI에서 _Additional Inputs_ 섹션을 확장하세요.  
-![Final app with local models](./assets/final_app_1.png)
-
-> **5g.** 여기에서 사용할 수 있는 모든 애플리케이션 매개변수를 확인할 수 있습니다.  
-모델, 벡터 DB 및 각 프롬프트에 사용할 기타 매개변수를 선택하세요. 마지막으로 질문을 시작할 준비가 완료되었습니다!  
-![Final app output](./assets/final_app_2.png)
-```
-## :tada: 축하합니다! :tada:
-지난 몇 시간 동안 많은 것을 배웠습니다. 하지만 이는 시작에 불과합니다.  
+## :tada: 축하드립니다! 실습을 완료하였습니다. :tada:
 [Cloudera Machine Learning](https://www.cloudera.com/products/machine-learning.html)은 온프레미스 및 클라우드에서 [Cloudera Data Platform](https://www.cloudera.com/)의 일부로 귀하의 엔터프라이즈에 더 많은 것을 제공합니다.
+
+Source: https://github.com/cloudera/CML_llm-hol.git
