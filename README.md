@@ -194,18 +194,18 @@ _Bonus_ UI에서 배포한 애플리케이션은 CML APIv2를 통해서도 배�
 
 :pencil2: CML의 주요 기능 중 하나는 데이터 과학 워크플로의 일부로 통합된 애플리케이션을 호스팅하는 것입니다. 
 
-
-_Bonus_ Cloudera 에서 제공하는 다양한 AMPs 외에도 사용자가 직접 정의한 AMPs를 등록하여 활용할 수도 있습니다.
+## _Bonus_ 실습 프로젝트 환경 쉽게 재구성하기
+Cloudera 에서 제공하는 다양한 AMPs 외에도 사용자가 직접 정의한 AMPs를 등록하여 활용할 수도 있습니다.
 금일 실습에 사용한 _Hands on Lab Workshop with LLM_ 프로젝트의 환경 세팅을 포함하여 현재 CML 환경에서 호스팅되고 있는 LLM 모델에 대한 배포(_LLM Model deploy for Hands on Lab_ 프로젝트)는 모두 _AMPs_ 를 활용하였습니다.
 ![alt text](.assets/../assets/handson-amp.png)
 
-_Hands on Lab Workshop with LLM_ 클릭하고, _Configure & Deploy_ 를 클릭하면 실습에 필요한 패키지 설치 및 job 등록이 자동으로 진행됩니다.
-![alt text](.assets/../assets/handson-project-amp.png)
+_Hands on Lab Workshop with LLM_ 클릭하고, _Configure & Deploy_ 를 클릭하면 실습에 필요한 패키지 설치 및 job 등록이 자동으로 진행됩니다. (패키지 설치에 30분 내외로 소요되므로 완료하지 않으셔도 됩니다.)  
+![Alt-text](./assets/handson-project-amp.png)
+
 :pencil2: AMPs를 활용하면 사용자가 정의한 다양한 프로토타입을 쉽게 공유하고, 활용할 수 있습니다.
 
 
 ## :tada: 축하드립니다! 실습을 완료하였습니다. :tada:
-
 
 [Cloudera Machine Learning](https://www.cloudera.com/products/machine-learning.html)은 온프레미스 및 클라우드에서 [Cloudera Data Platform](https://www.cloudera.com/)의 일부로 귀하의 엔터프라이즈에 더 많은 것을 제공합니다.
 
