@@ -137,8 +137,9 @@ def main():
         fn=get_responses, 
         title="Enterprise Custom Knowledge Base Chatbot",
         description = DESC,
-        additional_inputs=[gr.Radio(['Local Mistral 7B', 'AWS Bedrock Mistral 7B', "AWS Bedrock Claude v2.1"], label="Select Foundational Model", value="AWS Bedrock Mistral 7B", visible=True), 
+        additional_inputs=[gr.Radio(['Local Mistral 7B', 'AWS Bedrock Mistral 7B'], label="Select Foundational Model", value="AWS Bedrock Mistral 7B", visible=True), 
                            gr.Slider(minimum=0.01, maximum=1.0, step=0.01, value=0.5, label="Select Temperature (Randomness of Response)"),
+                           gr.Slider(minimum=0.01, maximum=5.0, step=0.01, value=1.2, label="Select Repetition penalty (Penalty for repetition)"),
                            gr.Radio(["50", "100", "250", "500", "1000"], label="Select Number of Tokens (Length of Response)", value="250"),
                            gr.Radio(['None', 'ChromaDB'], label="Vector Database Choices", value="None")],
         retry_btn = None,
@@ -158,7 +159,7 @@ def main():
 
     
 # Helper function for generating responses for the QA app
-def get_responses(message, history, model, temperature, token_count, vector_db):
+def get_responses(message, history, model, temperature, repetition_penalty, token_count, vector_db):
     
     # Process chat history
     #chat_history_string = '; '.join([strng for xchng in history for strng in xchng])
@@ -169,13 +170,13 @@ def get_responses(message, history, model, temperature, token_count, vector_db):
     if 'mistral' in model.lower():
         if vector_db == "None":
             context_chunk = ""
-        response = get_mistral_response_with_context(message, context_chunk, temperature, token_count)
+        response = get_mistral_response_with_context(message, context_chunk, temperature, repetition_penalty, token_count)
      
     elif 'claude' in model.lower():
         if vector_db == "None":
             # No context call Bedrock
             context_chunk = ""
-        response = get_bedrock_claude_response_with_context(message, context_chunk, temperature, token_count)
+        response = get_bedrock_claude_response_with_context(message, context_chunk, temperature, repetition_penalty, token_count)
     
     # Stream output to UI
     for i in range(len(response)):
@@ -236,7 +237,7 @@ def get_bedrock_claude_response_with_context(question, context, temperature, tok
 
     
 # Pass through user input to LLM model with enhanced prompt and stop tokens
-def get_mistral_response_with_context(question, context, temperature, token_count):
+def get_mistral_response_with_context(question, context, temperature, repetition_penalty, token_count):
     try:
         # Prompt 구조 통일
         if context:
@@ -267,7 +268,7 @@ def get_mistral_response_with_context(question, context, temperature, token_coun
             "request": {"prompt": prompt,
                         "temperature": temperature,
                         "max_new_tokens": token_count,
-                        "repetition_penalty": 1.2}
+                        "repetition_penalty": repetition_penalty}
         }
         response = requests.post(MODEL_ENDPOINT, data=json.dumps(data), headers={'Content-Type': 'application/json'})
         result = response.json()['response']['result'].split("### Response:")[-1].strip()  
