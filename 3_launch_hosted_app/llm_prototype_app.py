@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Dec 19 12:10:13 2024
+
+@author: hyeongyu
+"""
+import json
 import os
 import cmlapi
 import sys
@@ -170,7 +177,7 @@ def get_responses(message, history, model, temperature, repetition_penalty, toke
     if 'mistral' in model.lower():
         if vector_db == "None":
             context_chunk = ""
-        response = get_mistral_response_with_context(message, context_chunk, temperature, repetition_penalty, token_count)
+        response = get_mistral_response_with_context(model, message, context_chunk, temperature, repetition_penalty, token_count)
      
     elif 'claude' in model.lower():
         if vector_db == "None":
@@ -237,49 +244,65 @@ def get_bedrock_claude_response_with_context(question, context, temperature, tok
 
     
 # Pass through user input to LLM model with enhanced prompt and stop tokens
-def get_mistral_response_with_context(question, context, temperature, repetition_penalty, token_count):
-    try:
-        # Prompt 구조 통일
-        if context:
-            prompt = f"""
-            ### Instruction:
-            You are a helpful and honest assistant. If you are unsure about an answer, truthfully say "I don't know".
-            
-            ### Context:
-            {context}\n
-            
-            ### Question:
-            {question}\n
-            
-            ### Response:
-            """
-        else:
-            prompt = f"""
-            ### Instruction:
-            You are a helpful and honest assistant. If you are unsure about an answer, truthfully say "I don't know".
-            
-            ### Question:
-            {question}\n
-            
-            ### Response:
-            """
-        # 요청 생성 및 반환
-        data = {
-            "request": {"prompt": prompt,
-                        "temperature": temperature,
-                        "max_new_tokens": token_count,
-                        "repetition_penalty": repetition_penalty}
-        }
-        response = requests.post(MODEL_ENDPOINT, data=json.dumps(data), headers={'Content-Type': 'application/json'})
-        result = response.json()['response']['result'].split("### Response:")[-1].strip()  
+def get_mistral_response_with_context(model, question, context, temperature, repetition_penalty, token_count):
+    # Prompt 구조 통일
+    if context:
+        prompt = f"""
+        ### Instruction:
+        You are a helpful and honest assistant. If you are unsure about an answer, truthfully say "I don't know".
         
-        print(f"Request: {data}")
-        print(f"Response: {result}")
-        return result
-
-    except Exception as e:
-        print(e)
-        return str(e)
+        ### Context:
+        {context}\n
+        
+        ### Question:
+        {question}\n
+        
+        ### Response:
+        """
+    else:
+        prompt = f"""
+        ### Instruction:
+        You are a helpful and honest assistant. If you are unsure about an answer, truthfully say "I don't know".
+        
+        ### Question:
+        {question}\n
+        
+        ### Response:
+        """
+    if 'aws' in model.lower():
+        try:
+            data =  {"prompt": prompt,
+                    "temperature": temperature,
+                    "max_tokens": token_count}
+            response = boto3_bedrock.invoke_model(body=json.dumps(data), modelId=AWS_FOUNDATION_MODEL_ID, accept='application/json', contentType='application/json')
+            response_body = json.loads(response.get('body').read())
+            print("Model results successfully retreived")
+            result = response_body.get('outputs')
+            print(f"Request: {data}")
+            print(f"Response: {result}")
+            return result[0]['text']
+        except Exception as e:
+            print(e)
+            return str(e)
+    else: 
+        try:
+            # 요청 생성 및 반환
+            data = {
+                "request": {"prompt": prompt,
+                            "temperature": temperature,
+                            "max_new_tokens": token_count,
+                            "repetition_penalty": repetition_penalty}
+            }
+            response = requests.post(MODEL_ENDPOINT, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+            result = response.json()['response']['result'].split("### Response:")[-1].strip()  
+            
+            print(f"Request: {data}")
+            print(f"Response: {result}")
+            return result
+    
+        except Exception as e:
+            print(e)
+            return str(e)
 
 if __name__ == "__main__":
     main()
